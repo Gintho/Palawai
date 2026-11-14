@@ -1,0 +1,115 @@
+# Base de connaissances de l'agent Kai — spots et critères idéaux.
+# Sources : surf-forecast.com, surfnerd.com, surf-report.com, plages.tv (recherche nov. 2026).
+#
+# Directions en degrés "d'où ça vient" (0 = N, 90 = E, 180 = S, 270 = W).
+# forecast_point : point légèrement au large, pour que le modèle de houle Open-Meteo
+# renvoie des valeurs (les mailles collées à la côte sont parfois vides).
+
+region:
+  name: "Palavas-les-Flots / Carnon (Hérault)"
+  timezone: "Europe/Paris"
+  notes: >
+    Beach breaks exposés du Golfe du Lion. Houles courtes (période 5-8 s), générées
+    par le vent de mer (Marin, SE). Le combo idéal : houle de SE/S + vent qui tourne
+    au N-NW (Tramontane/Mistral) ou retombe. Marée négligeable (~20-30 cm).
+
+spots:
+  - id: palavas-coquilles
+    name: "Palavas – Plage des Coquilles"
+    lat: 43.5305
+    lon: 3.9365
+    forecast_point: { lat: 43.50, lon: 3.94 }
+    beach_facing: 160          # la plage regarde vers le SSE
+    swell_window: [100, 230]   # ESE → SW
+    best_swell_dir: 150        # SE
+    offshore_wind: 340         # NNW (Tramontane / Mistral)
+    min_height: 0.5
+    best_height: [0.8, 1.8]
+    level: "Débutant à intermédiaire"
+    notes: >
+      Le spot le plus populaire de Palavas, juste à l'est du port. Les digues/épis
+      fixent les bancs et facilitent l'accès au pic. Attention aux enrochements.
+
+  - id: palavas-mairie
+    name: "Palavas – Rive droite (La Mairie / Le Prévost)"
+    lat: 43.5265
+    lon: 3.9230
+    forecast_point: { lat: 43.50, lon: 3.92 }
+    beach_facing: 165
+    swell_window: [110, 235]
+    best_swell_dir: 160
+    offshore_wind: 340
+    min_height: 0.5
+    best_height: [0.8, 1.8]
+    level: "Intermédiaire"
+    notes: >
+      Beach break exposé, inconsistant, à l'ouest du port. Un peu abrité des vents de
+      SSW par la côte. Marche par houle de SE avec vent de NW.
+
+  - id: carnon-roquilles
+    name: "Carnon – Plage des Roquilles"
+    lat: 43.5410
+    lon: 3.9690
+    forecast_point: { lat: 43.51, lon: 3.97 }
+    beach_facing: 155
+    swell_window: [100, 225]
+    best_swell_dir: 170        # S (surfnerd), SE fonctionne aussi
+    offshore_wind: 330         # NW
+    min_height: 0.5
+    best_height: [0.7, 1.6]
+    level: "Débutant à intermédiaire"
+    notes: >
+      Entre Palavas et Carnon, épis réguliers. Marche à toutes les marées, un peu
+      mieux à marée montante. Houle de SW à SE, S idéal.
+
+  - id: carnon-petit-travers
+    name: "Carnon – Petit / Grand Travers"
+    lat: 43.5580
+    lon: 4.0200
+    forecast_point: { lat: 43.53, lon: 4.02 }
+    beach_facing: 145
+    swell_window: [95, 220]
+    best_swell_dir: 150
+    offshore_wind: 320         # NW
+    min_height: 0.6
+    best_height: [0.8, 1.8]
+    level: "Tous niveaux (débutants si petit)"
+    notes: >
+      Longue plage naturelle sans digues, bancs de sable mobiles, moins de monde.
+      Plus exposée au vent ; très sympa par petite houle + vent de terre.
+
+  - id: maguelone
+    name: "Maguelone (Villeneuve-lès-Maguelone)"
+    lat: 43.5050
+    lon: 3.8800
+    forecast_point: { lat: 43.48, lon: 3.88 }
+    beach_facing: 165
+    swell_window: [110, 240]
+    best_swell_dir: 165
+    offshore_wind: 345         # N-NNW
+    min_height: 0.6
+    best_height: [0.8, 1.6]
+    level: "Intermédiaire à confirmé"
+    notes: >
+      Plage sauvage à l'ouest de Palavas, shore break plus creux. Bonus si
+      Palavas sature. Accès à pied/vélo depuis le parking.
+
+# Grille de notation (utilisée par surf_forecast/scoring.py)
+criteria:
+  daylight_hours: [7, 19]
+  period:            # facteur selon la période moyenne (s)
+    - { max: 4,  factor: 0.35, label: "clapot" }
+    - { max: 5,  factor: 0.6,  label: "court" }
+    - { max: 6,  factor: 0.85, label: "correct" }
+    - { max: 8,  factor: 1.0,  label: "bon" }
+    - { max: 99, factor: 1.1,  label: "excellent" }
+  wind:
+    glassy_below_kmh: 8      # en dessous : quasi glassy quelle que soit la direction
+    onshore_bad_kmh: 20      # Marin au-dessus : soupe
+    offshore_too_strong_kmh: 45  # Tramontane trop forte : vagues aplaties, dangereux
+  verdicts:
+    - { min: 8, emoji: "🔥", label: "IDÉAL — fonce !" }
+    - { min: 6, emoji: "✅", label: "Bon — ça vaut le coup" }
+    - { min: 4, emoji: "🤏", label: "Surfable — longboard / mousse" }
+    - { min: 2, emoji: "😐", label: "Bof — si tu es en manque" }
+    - { min: 0, emoji: "❌", label: "Flat / pas surfable" }

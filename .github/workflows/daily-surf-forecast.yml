@@ -1,0 +1,23 @@
+name: Daily surf forecast → Telegram
+
+on:
+  schedule:
+    # 05:17 UTC = 06:17 à Paris en hiver (07:17 en été)
+    - cron: "17 5 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests
+      - name: Envoyer le forecast
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m surf_forecast
