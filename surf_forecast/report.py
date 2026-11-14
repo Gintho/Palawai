@@ -92,7 +92,8 @@ def build_report(config: dict, forecasts: dict[str, dict], today: date) -> str:
                 f" · {best.wind_label}"
             )
             if window:
-                lines.append(f"   ⏰ Créneau : {window[0]} → {window[1]}")
+                slot = window[0] if window[0] == window[1] else f"{window[0]} → {window[1]}"
+                lines.append(f"   ⏰ Créneau : {slot}")
             if marin_then_tramontane(scores):
                 lines.append("   ✨ Rotation Marin → Tramontane : fenêtre à saisir !")
 
@@ -103,7 +104,10 @@ def build_report(config: dict, forecasts: dict[str, dict], today: date) -> str:
         lines.append("")
         lines.append(f"👉 <b>Verdict : {emoji} {label_v}</b>")
         if top_score >= 4:
-            when = f" ({top_window[0]}-{top_window[1]})" if top_window else ""
+            when = ""
+            if top_window:
+                when = f" ({top_window[0]})" if top_window[0] == top_window[1] \
+                    else f" ({top_window[0]}-{top_window[1]})"
             lines.append(f"   Meilleur spot : {escape(top_spot['name'])}{when}")
         lines.append("")
 
