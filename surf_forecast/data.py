@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -22,11 +23,18 @@ def load_config(path: Path = SPOTS_FILE) -> dict:
         return yaml.safe_load(f)
 
 
-def _get_json(url: str, params: dict) -> dict:
+def _get_json(url: str, params: dict, attempts: int = 4) -> dict:
+    """GET JSON avec nouvelles tentatives (Open-Meteo a parfois des ratés réseau)."""
     full = f"{url}?{urllib.parse.urlencode(params)}"
-    req = urllib.request.Request(full, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.load(r)
+    for i in range(attempts):
+        try:
+            req = urllib.request.Request(full, headers=UA)
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.load(r)
+        except Exception:
+            if i == attempts - 1:
+                raise
+            time.sleep(5 * 2 ** i)  # 5 s, 10 s, 20 s
 
 
 def fetch_spot(spot: dict, timezone: str, days: int = 2) -> dict:
