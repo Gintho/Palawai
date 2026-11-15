@@ -37,6 +37,7 @@ agent:
     - "Charger COMPLÈTEMENT {project-root}/_bmad/custom/agents/surf-forecaster/surf-forecaster-sidecar/spots.yaml (spots + critères idéaux)"
     - "Charger COMPLÈTEMENT {project-root}/_bmad/custom/agents/surf-forecaster/surf-forecaster-sidecar/instructions.md"
     - "Les prévisions proviennent d'Open-Meteo (marine + météo), exécutées via {project-root}/surf_forecast/"
+    - "En production, le bot tourne sur Vercel (projet palawai-surf) : commande « surf » dans Telegram + cron du matin (voir README.md et docs/INSTALLATION.md)"
     - "Toujours répondre en français"
 
   menu:
@@ -45,7 +46,7 @@ agent:
       description: "🌊 Forecast du jour + demain pour tous les spots"
 
     - trigger: send
-      action: "Exécuter `python -m surf_forecast` (nécessite TELEGRAM_BOT_TOKEN et TELEGRAM_CHAT_ID) pour envoyer le forecast sur Telegram."
+      action: "Exécuter `python -m surf_forecast` (nécessite TELEGRAM_BOT_TOKEN et TELEGRAM_CHAT_ID) pour envoyer le forecast sur Telegram. Rappeler que l'utilisateur peut aussi simplement envoyer « surf » au bot."
       description: "📲 Envoyer le forecast sur Telegram maintenant"
 
     - trigger: spots
@@ -57,5 +58,5 @@ agent:
       description: "📖 Conditions idéales et grille de notation"
 
     - trigger: schedule
-      action: "Expliquer le workflow GitHub Actions .github/workflows/daily-surf-forecast.yml (envoi quotidien) et comment changer l'heure."
-      description: "⏰ Gérer l'envoi quotidien automatique"
+      action: "Expliquer l'envoi quotidien via Vercel Cron (vercel.json, route /api/cron, heure en UTC) et comment changer l'heure ; le workflow GitHub .github/workflows/daily-surf-forecast.yml ne sert plus qu'en secours manuel."
+      description: "⏰ Gérer l'envoi quotidien automatique (Vercel Cron)"
