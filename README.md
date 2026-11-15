@@ -1,13 +1,13 @@
 # 🏄 Palawai — Kai, le bot surf de Palavas / Carnon
 
 **Kai** est un agent **BMAD** (custom, type *expert* avec sidecar) doublé d'un **bot Telegram**.
-Il analyse chaque jour la houle et le vent sur les spots de Palavas-les-Flots, Carnon et
-Maguelone, et te dit clairement s'il faut aller surfer :
+Quand tu lui écris **`surf`** sur Telegram, il analyse la houle et le vent sur les spots de
+Palavas-les-Flots, Carnon et Maguelone, et te dit clairement s'il faut aller surfer :
 
 > 🔥 Idéal · ✅ Bon · 🤏 Surfable · 😐 Bof · ❌ Flat
 
-- 📲 **À la demande** : envoie `surf` au bot Telegram → forecast d'aujourd'hui et de demain.
-- ⏰ **Chaque matin** : le forecast arrive tout seul entre 6h et 7h (heure d'hiver).
+- 📲 **Uniquement à la demande** : envoie `surf` au bot Telegram → forecast d'aujourd'hui et de demain.
+- 🔕 **Aucun envoi automatique** : le bot ne t'écrit jamais de lui-même.
 - 🆓 **100 % gratuit** : prévisions [Open-Meteo](https://open-meteo.com) (sans clé), hébergement Vercel (offre Hobby).
 
 ---
@@ -119,7 +119,7 @@ Dans Telegram, conversation avec ton bot :
 | `surf`, `/surf`, `vagues`, `go`, `forecast` | Le forecast d'aujourd'hui et de demain |
 | n'importe quoi d'autre | Un petit message d'aide |
 
-Le forecast du matin arrive automatiquement, sans rien faire.
+Il n'y a **aucun envoi automatique** : pas de message tant que tu n'as rien demandé.
 Le bot ne répond **qu'à ton compte** (`TELEGRAM_CHAT_ID`) ; les autres messages sont ignorés.
 
 ## Architecture
@@ -129,7 +129,7 @@ Le bot ne répond **qu'à ton compte** (`TELEGRAM_CHAT_ID`) ; les autres message
                    ▲                                │
                    │                                ▼
                    │                        surf_forecast/web.py
-   Vercel Cron ──▶ /api/cron (chaque matin)         │
+                   │                                │
                    │                                ▼
                    │            data.py ──2 requêtes──▶ Open-Meteo (houle + vent)
                    │                                │
@@ -150,10 +150,10 @@ Le bot ne répond **qu'à ton compte** (`TELEGRAM_CHAT_ID`) ; les autres message
 │   ├── report.py      # construction du message Telegram (HTML)
 │   ├── telegram.py    # appels à l'API Bot Telegram
 │   ├── service.py     # forecast_text() / send_forecast() partagés
-│   ├── web.py         # application WSGI : /api/telegram, /api/cron, /api/setup
+│   ├── web.py         # application WSGI : /api/telegram, /api/setup
 │   └── __main__.py    # CLI : python -m surf_forecast [--dry-run]
 ├── app.py             # point d'entrée Vercel (expose surf_forecast.web.app)
-├── vercel.json        # cron quotidien Vercel
+├── vercel.json        # configuration Vercel (aucun cron)
 ├── tests/             # tests unitaires (unittest)
 └── .github/workflows/daily-surf-forecast.yml   # envoi manuel de secours (GitHub Actions)
 ```
@@ -161,12 +161,10 @@ Le bot ne répond **qu'à ton compte** (`TELEGRAM_CHAT_ID`) ; les autres message
 | Route | Rôle | Protection |
 |---|---|---|
 | `POST /api/telegram` | Webhook appelé par Telegram à chaque message | en-tête `X-Telegram-Bot-Api-Secret-Token` = `WEBHOOK_SECRET` + filtre sur `TELEGRAM_CHAT_ID` |
-| `GET /api/cron` | Envoi du forecast du matin | en-tête `Authorization: Bearer <CRON_SECRET>` (ajouté automatiquement par Vercel Cron) |
 | `GET /api/setup?key=…` | Enregistre le webhook et la commande `/surf` auprès de Telegram | `key` = `WEBHOOK_SECRET` |
 
-**Pourquoi Vercel plutôt que GitHub Actions ?** Les tâches planifiées GitHub ne sont pas
-garanties (retardées ou sautées, surtout sur un dépôt récent) et GitHub ne peut pas répondre
-à un message Telegram. Vercel gère les deux de façon fiable.
+**Pourquoi Vercel plutôt que GitHub Actions ?** GitHub ne peut pas répondre à un message
+Telegram ; Vercel héberge le webhook appelé par Telegram à chaque `surf`.
 
 ## Installation / réinstallation
 
@@ -175,7 +173,7 @@ Le guide pas à pas complet est dans **[docs/INSTALLATION.md](docs/INSTALLATION.
 1. Créer le bot avec @BotFather et récupérer le token.
 2. Récupérer ton chat id via `getUpdates`.
 3. Créer le projet Vercel relié à ce dépôt.
-4. Ajouter les 4 variables d'environnement.
+4. Ajouter les 3 variables d'environnement.
 5. Déployer, puis brancher le webhook avec `/api/setup`.
 
 ### Variables d'environnement (Vercel → Settings → Environment Variables)
@@ -185,7 +183,6 @@ Le guide pas à pas complet est dans **[docs/INSTALLATION.md](docs/INSTALLATION.
 | `TELEGRAM_BOT_TOKEN` | Token donné par @BotFather |
 | `TELEGRAM_CHAT_ID` | Ton chat id (plusieurs possibles, séparés par des virgules) |
 | `WEBHOOK_SECRET` | Mot de passe aléatoire partagé avec Telegram |
-| `CRON_SECRET` | Mot de passe aléatoire utilisé par Vercel Cron |
 
 ⚠️ Ne jamais committer ces valeurs dans le dépôt.
 
@@ -193,7 +190,6 @@ Le guide pas à pas complet est dans **[docs/INSTALLATION.md](docs/INSTALLATION.
 
 | Je veux… | Où | Comment |
 |---|---|---|
-| Changer l'heure du forecast du matin | [`vercel.json`](vercel.json) | `"schedule": "0 5 * * *"` est en **UTC** : Paris = UTC+1 en hiver, UTC+2 en été. Ex. `"0 6 * * *"` ≈ 7h en hiver. Sur l'offre gratuite, l'envoi se fait dans l'heure indiquée. |
 | Ajouter / retirer un spot | [`spots.yaml`](_bmad/custom/agents/surf-forecaster/surf-forecaster-sidecar/spots.yaml) | Copier un bloc `- id: …` et ajuster coordonnées, `swell_window`, `best_swell_dir`, `offshore_wind`, `best_height`. |
 | Rendre la notation plus/moins sévère | `spots.yaml` → `criteria` | Seuils de période, de vent et de verdict. |
 | Ajouter un mot déclencheur | [`surf_forecast/web.py`](surf_forecast/web.py) | Liste `TRIGGERS`. |
@@ -208,7 +204,7 @@ Chaque push sur la branche de production redéploie automatiquement Vercel.
 | `surf` ne répond rien | Webhook non branché ou token changé | Rouvrir `https://palawai-surf.vercel.app/api/setup?key=<WEBHOOK_SECRET>` : la réponse doit contenir `"ok": true` et `last_error: null` |
 | `/api/setup` renvoie `401` | Mauvaise `key` | Utiliser exactement la valeur de `WEBHOOK_SECRET` |
 | `/api/setup` renvoie une erreur Telegram `401 Unauthorized` | Token invalide ou révoqué | Mettre le nouveau token dans Vercel, redéployer, rouvrir `/api/setup` |
-| Pas de forecast le matin | Cron non exécuté ou erreur | Vercel → projet → **Settings → Cron Jobs** (exécutions) et **Logs** |
+| Erreur côté serveur | Exception dans la fonction | Vercel → projet → **Logs** |
 | « 😕 Impossible de récupérer les prévisions » | Open-Meteo indisponible un instant | Renvoyer `surf` quelques minutes plus tard |
 | Le bot répond par l'aide au lieu du forecast | Mot non reconnu | Envoyer exactement `surf` (majuscules acceptées) |
 | Après un changement de variable, rien ne change | Les variables ne s'appliquent qu'aux nouveaux déploiements | Vercel → **Deployments** → ⋯ → **Redeploy** |
@@ -231,7 +227,7 @@ dossier `_bmad/custom/agents/surf-forecaster` comme agent custom, activer **Kai*
 | `*send` | Envoyer le forecast sur Telegram maintenant |
 | `*spots` | Guide des spots |
 | `*conditions` | Conditions idéales et grille de notation |
-| `*schedule` | Gérer l'envoi quotidien (Vercel Cron) |
+| `*bot` | Utiliser le bot Telegram (« surf » à la demande) |
 
 ## Développement local
 

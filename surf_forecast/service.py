@@ -1,4 +1,4 @@
-"""Fonctions partagées par la CLI, le webhook Telegram et le cron Vercel."""
+"""Fonctions partagées par la CLI et le webhook Telegram."""
 
 from __future__ import annotations
 

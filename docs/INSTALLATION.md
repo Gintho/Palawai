@@ -52,7 +52,7 @@ Telegram doit pouvoir appeler l'URL de production sans être connecté à Vercel
 ## 4. Ajouter les variables d'environnement
 
 1. Dans le projet : **Settings** → **Environment Variables** (menu de gauche).
-2. Ajoute ces 4 variables (bouton **Add Another** entre chaque), environnement
+2. Ajoute ces 3 variables (bouton **Add Another** entre chaque), environnement
    **Production** coché :
 
    | Key | Value |
@@ -60,17 +60,16 @@ Telegram doit pouvoir appeler l'URL de production sans être connecté à Vercel
    | `TELEGRAM_BOT_TOKEN` | le token de l'étape 1 |
    | `TELEGRAM_CHAT_ID` | le chat id de l'étape 2 |
    | `WEBHOOK_SECRET` | un mot de passe aléatoire |
-   | `CRON_SECRET` | un autre mot de passe aléatoire |
 
 3. **Save**.
 
-Pour générer les deux mots de passe :
+Pour générer le mot de passe :
 
 ```bash
 python3 -c "import secrets; print(secrets.token_urlsafe(24))"
 ```
 
-> Astuce : tu peux coller d'un coup `CLE=valeur` sur 4 lignes dans le champ **Key**,
+> Astuce : tu peux coller d'un coup `CLE=valeur` sur 3 lignes dans le champ **Key**,
 > Vercel remplit tout seul les couples.
 
 ## 5. Déployer
@@ -102,8 +101,7 @@ Cette étape enregistre aussi la commande `/surf` dans le menu du bot.
 
 Envoie **`surf`** au bot : il affiche « en train d'écrire… » puis le forecast arrive.
 
-Le forecast du matin est envoyé par **Vercel Cron** (voir `vercel.json`) ; ses exécutions
-sont visibles dans **Settings → Cron Jobs**.
+Il n'y a pas d'envoi automatique : le bot n'écrit que lorsque tu lui envoies `surf`.
 
 ---
 

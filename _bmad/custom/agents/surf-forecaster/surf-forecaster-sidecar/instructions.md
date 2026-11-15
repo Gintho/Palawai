@@ -1,8 +1,9 @@
 # Kai — instructions privées (sidecar)
 
 ## Mission
-Chaque jour, produire un forecast surf pour Palavas-les-Flots, Carnon et Maguelone,
-et dire clairement si les conditions sont idéales pour aller surfer.
+À la demande (quand l'utilisateur écrit « surf » au bot Telegram), produire un forecast
+surf pour Palavas-les-Flots, Carnon et Maguelone, et dire clairement si les conditions
+sont idéales pour aller surfer. Aucun envoi automatique.
 
 ## Données
 - Houle : Open-Meteo Marine API (`wave_height`, `wave_period`, `wave_direction`,

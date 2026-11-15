@@ -17,7 +17,7 @@ def call(path, method="GET", body=b"", headers=None, query=""):
     return int(out["status"].split()[0]), json.loads(b"".join(res))
 
 
-ENV = {"WEBHOOK_SECRET": "s3cret", "CRON_SECRET": "c", "TELEGRAM_CHAT_ID": "42",
+ENV = {"WEBHOOK_SECRET": "s3cret", "TELEGRAM_CHAT_ID": "42",
        "TELEGRAM_BOT_TOKEN": "x"}
 
 
@@ -47,10 +47,9 @@ class WebTest(unittest.TestCase):
         send.assert_not_called()
 
     @mock.patch.object(web.service, "send_forecast")
-    def test_cron_auth(self, send):
-        self.assertEqual(call("/api/cron")[0], 401)
-        self.assertEqual(call("/api/cron", headers={"Authorization": "Bearer c"})[0], 200)
-        send.assert_called_once()
+    def test_no_automatic_send_route(self, send):
+        call("/api/cron")
+        send.assert_not_called()
 
     def test_setup_requires_key(self):
         self.assertEqual(call("/api/setup", query="key=bad")[0], 401)

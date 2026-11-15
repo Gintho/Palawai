@@ -1,9 +1,10 @@
-"""Application WSGI (Vercel) : webhook Telegram, cron du matin, branchement du webhook.
+"""Application WSGI (Vercel) : webhook Telegram et branchement du webhook.
 
 Routes :
   POST /api/telegram          webhook Telegram (« surf » → forecast)
-  GET  /api/cron              envoi quotidien (Vercel Cron, Authorization: Bearer CRON_SECRET)
   GET  /api/setup?key=...     enregistre le webhook auprès de Telegram (key = WEBHOOK_SECRET)
+
+Pas d'envoi automatique : le forecast n'est envoyé que quand l'utilisateur écrit « surf ».
 """
 
 from __future__ import annotations
@@ -18,8 +19,7 @@ from . import service, telegram
 TRIGGERS = {"surf", "/surf", "forecast", "/forecast", "vagues", "go"}
 HELP = ("🏄 Salut, c'est Kai !\n\n"
         "Envoie <b>surf</b> et je te donne le forecast de Palavas / Carnon / Maguelone "
-        "pour aujourd'hui et demain, avec mon verdict.\n"
-        "Tu reçois aussi le forecast automatiquement chaque matin.")
+        "pour aujourd'hui et demain, avec mon verdict.")
 
 
 def _same(a: str, b: str) -> bool:
@@ -45,14 +45,6 @@ def handle_telegram(headers: dict, body: bytes) -> tuple[int, dict]:
         service.send_forecast(chat_id)
     else:
         telegram.send(token, chat_id, HELP)
-    return 200, {"ok": True}
-
-
-def handle_cron(headers: dict) -> tuple[int, dict]:
-    secret = os.environ.get("CRON_SECRET", "")
-    if not _same(f"Bearer {secret}", headers.get("authorization", "")) or not secret:
-        return 401, {"ok": False}
-    service.send_forecast()
     return 200, {"ok": True}
 
 
@@ -83,8 +75,6 @@ def app(environ, start_response):
         if path == "/api/telegram" and method == "POST":
             length = int(environ.get("CONTENT_LENGTH") or 0)
             status, body = handle_telegram(headers, environ["wsgi.input"].read(length))
-        elif path == "/api/cron":
-            status, body = handle_cron(headers)
         elif path == "/api/setup":
             status, body = handle_setup(parse_qs(environ.get("QUERY_STRING", "")),
                                         headers.get("host", ""))
