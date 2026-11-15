@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/*.py": { "maxDuration": 60, "includeFiles": "{surf_forecast,_bmad}/**" }
+  },
+  "crons": [
+    { "path": "/api/cron", "schedule": "0 5 * * *" }
+  ]
+}

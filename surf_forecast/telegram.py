@@ -20,15 +20,18 @@ def split_message(text: str, limit: int = MAX_LEN) -> list[str]:
     return chunks
 
 
+def call(token: str, method: str, payload: dict) -> dict:
+    url = f"https://api.telegram.org/bot{token}/{method}"
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        resp = json.load(r)
+    if not resp.get("ok"):
+        raise RuntimeError(f"Telegram error: {resp}")
+    return resp
+
+
 def send(token: str, chat_id: str, text: str) -> None:
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
     for chunk in split_message(text):
-        body = json.dumps({
-            "chat_id": chat_id, "text": chunk, "parse_mode": "HTML",
-            "disable_web_page_preview": True,
-        }).encode()
-        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=30) as r:
-            resp = json.load(r)
-        if not resp.get("ok"):
-            raise RuntimeError(f"Telegram error: {resp}")
+        call(token, "sendMessage", {"chat_id": chat_id, "text": chunk, "parse_mode": "HTML",
+                                    "disable_web_page_preview": True})

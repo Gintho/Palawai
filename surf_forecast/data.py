@@ -23,7 +23,7 @@ def load_config(path: Path = SPOTS_FILE) -> dict:
         return yaml.safe_load(f)
 
 
-def _get_json(url: str, params: dict, attempts: int = 4) -> dict:
+def _get_json(url: str, params: dict, attempts: int = 3) -> dict:
     """GET JSON avec nouvelles tentatives (Open-Meteo a parfois des ratés réseau)."""
     full = f"{url}?{urllib.parse.urlencode(params)}"
     for i in range(attempts):
@@ -34,24 +34,29 @@ def _get_json(url: str, params: dict, attempts: int = 4) -> dict:
         except Exception:
             if i == attempts - 1:
                 raise
-            time.sleep(5 * 2 ** i)  # 5 s, 10 s, 20 s
+            time.sleep(5 * 2 ** i)  # 5 s puis 10 s
 
 
-def fetch_spot(spot: dict, timezone: str, days: int = 2) -> dict:
-    """Retourne {'hourly': [ {time, wave_height, ...}, ...], 'sea_temp': float|None}."""
-    fp = spot.get("forecast_point", {"lat": spot["lat"], "lon": spot["lon"]})
-    marine = _get_json(MARINE_URL, {
-        "latitude": fp["lat"], "longitude": fp["lon"],
-        "hourly": "wave_height,wave_period,wave_direction,swell_wave_height,"
-                  "swell_wave_period,swell_wave_direction,sea_surface_temperature",
-        "timezone": timezone, "forecast_days": days,
-    })
-    weather = _get_json(WEATHER_URL, {
-        "latitude": spot["lat"], "longitude": spot["lon"],
-        "hourly": "wind_speed_10m,wind_direction_10m,wind_gusts_10m",
-        "wind_speed_unit": "kmh", "timezone": timezone, "forecast_days": days,
-    })
-    return merge(marine, weather)
+MARINE_VARS = ("wave_height,wave_period,wave_direction,swell_wave_height,"
+               "swell_wave_period,swell_wave_direction,sea_surface_temperature")
+WIND_VARS = "wind_speed_10m,wind_direction_10m,wind_gusts_10m"
+
+
+def _coords(points: list[dict]) -> dict:
+    return {"latitude": ",".join(str(p["lat"]) for p in points),
+            "longitude": ",".join(str(p["lon"]) for p in points)}
+
+
+def fetch_all(spots: list[dict], timezone: str, days: int = 2) -> dict[str, dict]:
+    """Toutes les prévisions en 2 requêtes (Open-Meteo accepte plusieurs coordonnées)."""
+    sea_pts = [s.get("forecast_point", {"lat": s["lat"], "lon": s["lon"]}) for s in spots]
+    common = {"timezone": timezone, "forecast_days": days}
+    marine = _get_json(MARINE_URL, {**_coords(sea_pts), "hourly": MARINE_VARS, **common})
+    weather = _get_json(WEATHER_URL, {**_coords(spots), "hourly": WIND_VARS,
+                                      "wind_speed_unit": "kmh", **common})
+    if isinstance(marine, dict):  # un seul spot -> objet au lieu d'une liste
+        marine, weather = [marine], [weather]
+    return {s["id"]: merge(m, w) for s, m, w in zip(spots, marine, weather)}
 
 
 def merge(marine: dict, weather: dict) -> dict:

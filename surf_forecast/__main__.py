@@ -24,20 +24,14 @@ def main(argv: list[str] | None = None) -> int:
     tz = config["region"]["timezone"]
     today = datetime.now(ZoneInfo(tz)).date()
 
-    forecasts, errors = {}, []
-    for spot in config["spots"]:
-        try:
-            forecasts[spot["id"]] = data.fetch_spot(spot, tz)
-        except Exception as exc:  # un spot en erreur ne bloque pas les autres
-            errors.append(f"{spot['id']}: {exc}")
-    if not forecasts:
-        print("Aucune prévision récupérée :\n" + "\n".join(errors), file=sys.stderr)
+    try:
+        forecasts = data.fetch_all(config["spots"], tz)
+    except Exception as exc:
+        print(f"Aucune prévision récupérée : {exc}", file=sys.stderr)
         return 1
 
     text = report.build_report(config, forecasts, today)
     print(text)
-    for e in errors:
-        print(f"[warn] {e}", file=sys.stderr)
 
     if args.dry_run:
         return 0

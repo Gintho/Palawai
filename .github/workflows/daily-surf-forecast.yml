@@ -1,9 +1,8 @@
-name: Daily surf forecast → Telegram
+name: Surf forecast → Telegram (manuel)
 
+# L'envoi quotidien et la commande « surf » tournent maintenant sur Vercel
+# (voir vercel.json et api/). Ce workflow reste disponible en déclenchement manuel.
 on:
-  schedule:
-    # 05:17 UTC = 06:17 à Paris en hiver (07:17 en été)
-    - cron: "17 5 * * *"
   workflow_dispatch: {}
 
 jobs:
