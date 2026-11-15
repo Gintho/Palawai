@@ -1,7 +1,7 @@
 name: Surf forecast → Telegram (manuel)
 
 # La commande « surf » tourne sur Vercel (voir app.py). Aucun envoi automatique :
-# (voir vercel.json et api/). Ce workflow reste disponible en déclenchement manuel.
+# ce workflow ne sert que de secours, en déclenchement manuel.
 on:
   workflow_dispatch: {}
 
