@@ -13,7 +13,8 @@ _bmad/custom/agents/surf-forecaster/
     ├── spots.yaml                      # spots + conditions idéales + grille de notation
     └── instructions.md                 # méthode de prévision de l'agent
 surf_forecast/                          # moteur : Open-Meteo → score → message Telegram
-.github/workflows/daily-surf-forecast.yml   # envoi quotidien automatique (≈ 6h15)
+app.py, vercel.json                     # bot Telegram + cron quotidien sur Vercel
+.github/workflows/daily-surf-forecast.yml   # envoi manuel (secours)
 ```
 
 ## Les spots
@@ -30,18 +31,21 @@ surf_forecast/                          # moteur : Open-Meteo → score → mess
 puis le vent qui tourne au NO (ou tombe). Période ≥ 6 s, sinon c'est du clapot.
 La marée est négligeable.
 
-## Mise en place de l'envoi Telegram (5 min)
+## Fonctionnement (Vercel)
 
-1. Sur Telegram, écris à **@BotFather** → `/newbot` → récupère le **token**.
-2. Envoie un message quelconque à ton nouveau bot, puis ouvre
-   `https://api.telegram.org/bot<TOKEN>/getUpdates` et note `"chat":{"id": …}` → c'est ton **chat id**.
-3. Sur GitHub : *Settings → Secrets and variables → Actions → New repository secret* :
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-4. *Actions → Daily surf forecast → Run workflow* pour tester tout de suite.
-   Ensuite, ça part tout seul chaque matin (le cron GitHub ne tourne que depuis la branche par défaut).
+Le bot tourne sur Vercel (projet `palawai-surf`, https://palawai-surf.vercel.app) :
 
-Changer l'heure : modifie la ligne `cron` du workflow (heure UTC).
+- **À la demande** : envoie `surf` (ou `/surf`) au bot Telegram → forecast du jour et de demain.
+- **Chaque matin** : Vercel Cron appelle `/api/cron` vers 6h-7h (heure de Paris en hiver).
+- Code : `app.py` → `surf_forecast/web.py` (webhook `/api/telegram`, cron `/api/cron`,
+  branchement `/api/setup?key=<WEBHOOK_SECRET>`).
+
+Variables d'environnement Vercel : `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`,
+`WEBHOOK_SECRET`, `CRON_SECRET`. Après un changement de token, rouvrir
+`https://palawai-surf.vercel.app/api/setup?key=<WEBHOOK_SECRET>` pour rebrancher le webhook.
+
+Le workflow GitHub Actions reste disponible en lancement manuel (secrets
+`TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID`).
 
 ## En local
 
